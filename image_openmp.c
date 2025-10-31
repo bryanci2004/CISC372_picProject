@@ -1,10 +1,11 @@
-#define _POSIX_C_SOURCE 199309L
+#define _POSIX_C_SOURCE 199309L   
 #include <stdio.h>
 #include <stdint.h>
 #include <time.h>
 #include <string.h>
 #include "image.h"
 #include <pthread.h>
+#include <omp.h>
 
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"
@@ -83,33 +84,18 @@ uint8_t getPixelValue(Image* srcImage,int x,int y,int bit,Matrix algorithm){
 //            algorithm: The kernel matrix to use for the convolution
 //Returns: Nothing
 void convolute(Image* srcImage, Image* destImage, Matrix algorithm){
-    int threads = g_threads;
-    if (threads < 1) threads = 1;
-    if (threads > srcImage->height) threads = srcImage->height; // avoid empty workers
-
-    pthread_t *ts   = (pthread_t*)malloc(sizeof(pthread_t)   * threads);
-    WorkerArgs *arg = (WorkerArgs*)malloc(sizeof(WorkerArgs) * threads);
-
-    int rows = srcImage->height;
-    int base = rows / threads;
-    int rem  = rows % threads;
-    int row  = 0;
-
-    for (int i = 0; i < threads; i++) {
-        int take = base + (i < rem ? 1 : 0);
-        arg[i].start_row = row;
-        arg[i].end_row   = row + take;
-        arg[i].src = srcImage;
-        arg[i].dst = destImage;
-        memcpy(arg[i].alg, algorithm, sizeof(Matrix));
-        row += take;
-        pthread_create(&ts[i], NULL, worker, &arg[i]);
+    // Parallelize the outer (row) loop. Each thread writes distinct rows => no races.
+    #pragma omp parallel for schedule(static)
+    for (int row = 0; row < srcImage->height; row++) {
+        for (int pix = 0; pix < srcImage->width; pix++) {
+            for (int bit = 0; bit < srcImage->bpp; bit++) {
+                destImage->data[Index(pix,row,srcImage->width,bit,srcImage->bpp)] =
+                    getPixelValue(srcImage, pix, row, bit, algorithm);
+            }
+        }
     }
-    for (int i = 0; i < threads; i++) pthread_join(ts[i], NULL);
-
-    free(ts);
-    free(arg);
 }
+
 
 
 
@@ -145,6 +131,9 @@ int main(int argc, char** argv) {
         g_threads = atoi(argv[3]);
         if (g_threads < 1) g_threads = 1;
     }
+
+    omp_set_num_threads(g_threads);
+
 
     char* fileName = argv[1];
     if (!strcmp(argv[1], "pic4.jpg") && !strcmp(argv[2], "gauss")) {
