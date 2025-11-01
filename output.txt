@@ -1,0 +1,15 @@
+Script started on Fri Oct 31 23:16:36 2025
+]0;bryanci@r1n06.darwin:~/CISC372_picProject[?1034h[bryanci@r1n06 CISC372_picProject]$ export OMP_NUM_THREADS=$SLURM_CPUS_PER_TASK
+]0;bryanci@r1n06.darwin:~/CISC372_picProject[bryanci@r1n06 CISC372_picProject]$ ./image_pthread pic1.jpg edge 4
+Took 0.137 seconds using 4 thread(s)
+]0;bryanci@r1n06.darwin:~/CISC372_picProject[bryanci@r1n06 CISC372_picProject]$ ls
+README.md  image.h	 image_openmp.c  makefile    output.txt  pic2.jpg  pic4.jpg	stb_image_write.h
+image.c    image_openmp  image_pthread	 output.png  pic1.jpg	 pic3.jpg  stb_image.h
+]0;bryanci@r1n06.darwin:~/CISC372_picProject[bryanci@r1n06 CISC372_picProject]$ mv output.png pthread_output.png
+]0;bryanci@r1n06.darwin:~/CISC372_picProject[bryanci@r1n06 CISC372_picProject]$ ./image_openmp pic1.jpg edge 4
+Took 0.137 seconds using 4 thread(s)
+]0;bryanci@r1n06.darwin:~/CISC372_picProject[bryanci@r1n06 CISC372_picProject]$ mv output.png openmp_output.png
+]0;bryanci@r1n06.darwin:~/CISC372_picProject[bryanci@r1n06 CISC372_picProject]$ exit
+exit
+
+Script done on Fri Oct 31 23:19:50 2025
